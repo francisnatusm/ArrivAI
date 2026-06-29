@@ -125,7 +125,7 @@ export default function ProfileForm({ onSubmit, loading }) {
           disabled={loading}
           className="w-full rounded-lg bg-accent py-3.5 text-sm font-semibold text-navy transition hover:bg-accent/90 disabled:opacity-50"
         >
-          {loading ? 'Calculating your IRS…' : 'Calculate Integration Readiness'}
+          {loading ? 'Just a moment…' : 'Find my best city'}
         </button>
       </form>
     </section>
