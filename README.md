@@ -8,8 +8,22 @@ ArrivAI is a migrant economic integration platform for South Korea. It combines 
 
 <!-- API: https://arriv-ai.vercel.app -->
 
+## Install as an app (PC & mobile)
+
+ArrivAI is a **Progressive Web App (PWA)** — you can install it on your phone or computer and open it like a native app (no app store required).
+
+| Platform | How to install |
+|----------|----------------|
+| **Live site** | Open [arriv-ai-web.vercel.app](https://arriv-ai-web.vercel.app) and tap **Install app** in the header |
+| **iPhone / iPad** | Safari → **Share** → **Add to Home Screen** |
+| **Android** | Chrome menu (⋮) → **Install app** or **Add to Home screen** |
+| **Windows / Mac** | Chrome or Edge → install icon in the address bar, or menu → **Install ArrivAI** |
+
+After install, ArrivAI appears on your home screen or desktop and runs in full-screen without the browser toolbar.
+
 ## Features
 
+- **Installable PWA** — add to home screen on mobile or install on desktop (Chrome, Edge, Safari)
 - **Integration Readiness Score (IRS)** — 79 Korean cities scored from your profile
 - **Profile-driven scoring** — skill, Korean level, country of origin, and target city all affect results
 - **3D satellite map** — MapLibre with IRS markers per city

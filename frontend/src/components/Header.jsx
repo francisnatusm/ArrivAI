@@ -1,3 +1,5 @@
+import InstallApp from './InstallApp.jsx';
+
 export default function Header({ compact }) {
   return (
     <header
@@ -15,8 +17,11 @@ export default function Header({ compact }) {
           </p>
         )}
       </div>
-      <div className="hidden rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium text-accent sm:block">
-        Integration Readiness Score
+      <div className="flex items-center gap-2 sm:gap-3">
+        <InstallApp />
+        <div className="hidden rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium text-accent sm:block">
+          Integration Readiness Score
+        </div>
       </div>
     </header>
   );
