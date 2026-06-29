@@ -67,16 +67,109 @@ npm run stop      # free port 3001
 
 ## Environment variables
 
-### API (`.env` at repo root)
+**Never commit `.env` or `firebase-service-account.json`.** Use `.env.example` as a template only.
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes (chat) | Claude API key |
-| `ANTHROPIC_MODEL` | No | Default `claude-sonnet-4-6` |
-| `FIREBASE_SERVICE_ACCOUNT_PATH` | No | Local path to Firebase JSON |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | No | Inline JSON (use on Vercel) |
-| `BRIGHTDATA_API_TOKEN` | No | Saramin job scraping |
-| `ANTHROPIC_INSECURE_SSL` | No | Dev only — local SSL workaround |
+---
+
+## API keys & external services (for reviewers)
+
+Each integration is **optional except Anthropic** (chat). The app degrades gracefully when a key is missing.
+
+### Data flow overview
+
+```
+User profile  →  IRS scoring (local logic, no API key)
+City panel jobs →  Firestore cache? → Bright Data → Saramin HTML → parse
+                →  else mock listings
+Chat message    →  Anthropic Claude API (profile injected in system prompt)
+Map tiles       →  MapTiler (optional) or free Esri satellite fallback
+Sessions/jobs   →  Firestore cache (optional)
+Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright Data)
+```
+
+---
+
+### `ANTHROPIC_API_KEY` — Claude chat assistant
+
+| | |
+|---|---|
+| **Provider** | [Anthropic](https://console.anthropic.com/) |
+| **Used in** | `server.js` → `POST /api/chat` |
+| **Purpose** | Powers the **ArrivAI Assistant** sidebar. Sends the user message to Claude with a system prompt that includes their skill, Korean level, origin, IRS, and target city. |
+| **Required?** | **Yes** for live chat. Without it, the API returns a fallback message telling the user to configure the key. |
+| **Related** | `ANTHROPIC_MODEL` (default `claude-sonnet-4-6`) |
+
+---
+
+### `BRIGHTDATA_API_TOKEN` — Saramin job scraping (Web Unlocker)
+
+| | |
+|---|---|
+| **Provider** | [Bright Data](https://brightdata.com/) — **Web Unlocker API** |
+| **Used in** | `lib/scraper.js` → `scrapeJobsFromSaramin()` |
+| **Called from** | `server.js` → `GET /api/jobs/:city/:skill` and daily `POST /api/cron/refresh` |
+| **Purpose** | Fetches **real job listings** from **Saramin** (Korea's major job board). Saramin blocks simple server-side HTTP requests; Bright Data acts as a proxy that returns the raw HTML so we can parse job titles and companies. |
+| **How it works** | 1. Build Saramin search URL with skill keyword + city location code (`loc_cd` from `lib/cities.js`).<br>2. `POST https://api.brightdata.com/request` with zone `web_unlocker1`, target URL, format `raw`.<br>3. Parse HTML in `parseJobListings()` for `.job_tit` / `.corp_name` CSS classes.<br>4. Return up to 5 jobs to the frontend `JobListings` component. |
+| **Required?** | **No.** If missing or scrape fails, the API falls back to **mock listings** (same UI, placeholder company names). IRS scoring does **not** depend on this key. |
+| **Caching** | Successful scrapes are stored in Firestore (`jobs` collection) when Firebase is configured, to reduce Bright Data usage. |
+| **Cost note** | Bright Data is a paid proxy service; use for demos/production job data, not required for core IRS/map/chat features. |
+
+**Example Saramin URL scraped:**
+`https://www.saramin.co.kr/zf_user/search/recruit?searchword=software+engineering&loc_cd=101000`
+
+---
+
+### `FIREBASE_SERVICE_ACCOUNT_PATH` / `FIREBASE_SERVICE_ACCOUNT_JSON` — Firestore cache
+
+| | |
+|---|---|
+| **Provider** | [Firebase / Firestore](https://firebase.google.com/) |
+| **Used in** | `lib/firestore.js` |
+| **Purpose** | Optional persistence layer for three things: |
+| | 1. **Job cache** — scraped Saramin results per city+skill (48h TTL) |
+| | 2. **Session store** — user profile + city scores after `/api/profile` |
+| | 3. **City metrics cache** — IRS breakdown per city for analytics |
+| **Required?** | **No.** In-memory sessions work locally; without Firebase, jobs skip cache and sessions are not persisted across serverless cold starts (chat still works because the frontend sends full profile in each request). |
+| **Local vs Vercel** | Local: path to `firebase-service-account.json`. Vercel: paste minified JSON into `FIREBASE_SERVICE_ACCOUNT_JSON`. |
+
+---
+
+### `VITE_MAPTILER_KEY` — Map tiles & terrain (frontend only)
+
+| | |
+|---|---|
+| **Provider** | [MapTiler](https://www.maptiler.com/) |
+| **Used in** | `frontend/src/components/KoreaMap.jsx` |
+| **Purpose** | Upgrades the map from free **Esri satellite** tiles to **MapTiler hybrid** satellite + optional **3D terrain** (hills). |
+| **Required?** | **No.** Without it, the map still works using Esri imagery and 3D tilt. |
+
+---
+
+### Other variables
+
+| Variable | Purpose |
+|----------|---------|
+| `ANTHROPIC_MODEL` | Override Claude model ID (default `claude-sonnet-4-6`). |
+| `ANTHROPIC_INSECURE_SSL` | **Local dev only** — bypasses TLS verification if your network blocks Anthropic API. Never set on Vercel. |
+| `VITE_API_BASE_URL` | Production frontend API base URL. Leave empty when using Vercel rewrite proxy in `frontend/vercel.json`. |
+| `PORT` | Local API port (default `3001`). |
+
+---
+
+### Quick reference table
+
+| Variable | Layer | Required | If missing |
+|----------|-------|----------|------------|
+| `ANTHROPIC_API_KEY` | API | For chat | Chat shows fallback / error |
+| `BRIGHTDATA_API_TOKEN` | API | No | Mock job listings shown |
+| `FIREBASE_SERVICE_ACCOUNT_*` | API | No | No cache; sessions ephemeral on Vercel |
+| `VITE_MAPTILER_KEY` | Frontend | No | Esri satellite map (still works) |
+
+---
+
+### API (`.env` at repo root) — copy template
+
+See `.env.example` for the full list. Minimum for a full demo: **`ANTHROPIC_API_KEY`**. Add **Bright Data** when you want real Saramin jobs for mentors to verify live scraping.
 
 ### Frontend (`frontend/.env`)
 
@@ -85,7 +178,7 @@ npm run stop      # free port 3001
 | `VITE_MAPTILER_KEY` | No | MapTiler satellite/terrain tiles |
 | `VITE_API_BASE_URL` | No | Leave empty locally (uses Vite proxy) |
 
-**Never commit `.env` or `firebase-service-account.json`.**
+---
 
 ## Deploy to Vercel
 
