@@ -1,5 +1,3 @@
-frontend/
-frontend/**
 *.md
 .env
 .env.*
