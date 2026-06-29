@@ -151,6 +151,6 @@ Use **two Vercel projects** from this repo:
 
 Scores combine job demand, cost of living, Korean language fit, diaspora community fit, and market trend — weighted per city and personalized by skill + origin.
 
-## License
-
-Private / portfolio project — see repository owner for usage terms.
+<div align="center">
+  <a href="https://www.francisnatusm.com/">Francis Natus M.</a>
+</div>
