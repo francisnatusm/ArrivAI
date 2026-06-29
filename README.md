@@ -32,39 +32,6 @@ ArrivAI/
 └── vercel.json       # API deployment config
 ```
 
-## Local development
-
-### Prerequisites
-
-- Node.js 18+
-- API keys in `.env` (copy from `.env.example`)
-
-### 1. Backend (port 3001)
-
-```powershell
-cd ArrivAI
-npm install
-copy .env.example .env   # then fill in secrets
-npm run start
-```
-
-### 2. Frontend (port 5173)
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173). The frontend proxies `/api` to `localhost:3001`.
-
-### Useful commands
-
-```powershell
-npm run restart   # restart API (Windows)
-npm run stop      # free port 3001
-```
-
 ## Environment variables
 
 **Never commit `.env` or `firebase-service-account.json`.** Use `.env.example` as a template only.
@@ -130,7 +97,7 @@ Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright
 | | 2. **Session store** — user profile + city scores after `/api/profile` |
 | | 3. **City metrics cache** — IRS breakdown per city for analytics |
 | **Required?** | **No.** In-memory sessions work locally; without Firebase, jobs skip cache and sessions are not persisted across serverless cold starts (chat still works because the frontend sends full profile in each request). |
-| **Local vs Vercel** | Local: path to `firebase-service-account.json`. Vercel: paste minified JSON into `FIREBASE_SERVICE_ACCOUNT_JSON`. |
+| **Local vs Vercel** | Vercel: paste minified JSON into `FIREBASE_SERVICE_ACCOUNT_JSON`. |
 
 ---
 
@@ -150,9 +117,8 @@ Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright
 | Variable | Purpose |
 |----------|---------|
 | `ANTHROPIC_MODEL` | Override Claude model ID (default `claude-sonnet-4-6`). |
-| `ANTHROPIC_INSECURE_SSL` | **Local dev only** — bypasses TLS verification if your network blocks Anthropic API. Never set on Vercel. |
+| `ANTHROPIC_INSECURE_SSL` | Dev-only TLS workaround if Anthropic API is blocked on your network. Never set on Vercel. |
 | `VITE_API_BASE_URL` | Production frontend API base URL. Leave empty when using Vercel rewrite proxy in `frontend/vercel.json`. |
-| `PORT` | Local API port (default `3001`). |
 
 ---
 
@@ -170,13 +136,6 @@ Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright
 ### API (`.env` at repo root) — copy template
 
 See `.env.example` for the full list. Minimum for a full demo: **`ANTHROPIC_API_KEY`**. Add **Bright Data** when you want real Saramin jobs for mentors to verify live scraping.
-
-### Frontend (`frontend/.env`)
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `VITE_MAPTILER_KEY` | No | MapTiler satellite/terrain tiles |
-| `VITE_API_BASE_URL` | No | Leave empty locally (uses Vite proxy) |
 
 ---
 
