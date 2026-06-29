@@ -207,6 +207,14 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'arrivai-api' });
 });
 
+app.get('/', (_req, res) => {
+  res.json({
+    service: 'arrivai-api',
+    message: 'ArrivAI backend — use the frontend app or /api/health',
+    health: '/api/health',
+  });
+});
+
 /** Cron: refresh job data from Saramin via Bright Data */
 app.post('/api/cron/refresh', async (_req, res) => {
   const skills = ['software engineering', 'nursing', 'teaching english', 'manufacturing'];

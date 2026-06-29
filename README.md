@@ -6,7 +6,8 @@ ArrivAI is a migrant economic integration platform for South Korea. It combines 
 
 [Live Demo](#) · [Repository](https://github.com/francisnatusm/ArrivAI)
 
-<!-- After Vercel deploy: replace Live Demo # with your frontend URL, e.g. https://arrivaai.vercel.app -->
+<!-- Live Demo: deploy frontend on Vercel (root: frontend), then set link to e.g. https://arrivai-web.vercel.app -->
+<!-- API: https://arriv-ai.vercel.app -->
 
 ## Features
 
