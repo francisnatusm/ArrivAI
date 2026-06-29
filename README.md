@@ -4,9 +4,8 @@
 
 ArrivAI is a migrant economic integration platform for South Korea. It combines IRS city scoring across 79 locations, a 3D satellite map, real Saramin job data via Bright Data, and a Claude-powered assistant — so migrants can compare cities by skill, language level, and country of origin before they arrive.
 
-[Live Demo](#) · [Repository](https://github.com/francisnatusm/ArrivAI)
+[Live Demo](https://arriv-ai-web.vercel.app) · [Repository](https://github.com/francisnatusm/ArrivAI)
 
-<!-- Live Demo: deploy frontend on Vercel (root: frontend), then set link to e.g. https://arrivai-web.vercel.app -->
 <!-- API: https://arriv-ai.vercel.app -->
 
 ## Features
