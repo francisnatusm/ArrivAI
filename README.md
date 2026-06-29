@@ -8,7 +8,7 @@ AI-powered platform helping migrants find the best Korean city for jobs and inte
 - **Profile-driven scoring** — skill, Korean level, country of origin, and target city all affect results
 - **3D satellite map** — MapLibre with IRS markers per city
 - **AI chat assistant** — Claude-powered guide with your profile context
-- **Job listings** — Saramin scrape (Bright Data) with mock fallback
+- **Job listings** — Saramin scrape via Bright Data
 - **World region mapping** — any country of origin maps to diaspora regions for scoring
 
 ## Tech stack
@@ -18,7 +18,7 @@ AI-powered platform helping migrants find the best Korean city for jobs and inte
 | Frontend | React, Vite, Tailwind CSS, MapLibre GL |
 | Backend | Node.js, Express |
 | AI | Anthropic Claude API |
-| Data | Firebase Firestore (optional cache) |
+| Data | Firebase Firestore (cache) |
 | Deploy | Vercel (API + frontend) |
 
 ## Project structure
@@ -40,17 +40,16 @@ ArrivAI/
 
 ## API keys & external services (for reviewers)
 
-Each integration is **optional except Anthropic** (chat). The app degrades gracefully when a key is missing.
+External services integrated in this project and how they are used in the codebase.
 
 ### Data flow overview
 
 ```
-User profile  →  IRS scoring (local logic, no API key)
-City panel jobs →  Firestore cache? → Bright Data → Saramin HTML → parse
-                →  else mock listings
+User profile  →  IRS scoring (local logic)
+City panel jobs →  Firestore cache → Bright Data → Saramin HTML → parse
 Chat message    →  Anthropic Claude API (profile injected in system prompt)
-Map tiles       →  MapTiler (optional) or free Esri satellite fallback
-Sessions/jobs   →  Firestore cache (optional)
+Map tiles       →  MapTiler or Esri satellite fallback
+Sessions/jobs   →  Firestore cache
 Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright Data)
 ```
 
@@ -63,7 +62,6 @@ Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright
 | **Provider** | [Anthropic](https://console.anthropic.com/) |
 | **Used in** | `server.js` → `POST /api/chat` |
 | **Purpose** | Powers the **ArrivAI Assistant** sidebar. Sends the user message to Claude with a system prompt that includes their skill, Korean level, origin, IRS, and target city. |
-| **Required?** | **Yes** for live chat. Without it, the API returns a fallback message telling the user to configure the key. |
 | **Related** | `ANTHROPIC_MODEL` (default `claude-sonnet-4-6`) |
 
 ---
@@ -77,9 +75,7 @@ Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright
 | **Called from** | `server.js` → `GET /api/jobs/:city/:skill` and daily `POST /api/cron/refresh` |
 | **Purpose** | Fetches **real job listings** from **Saramin** (Korea's major job board). Saramin blocks simple server-side HTTP requests; Bright Data acts as a proxy that returns the raw HTML so we can parse job titles and companies. |
 | **How it works** | 1. Build Saramin search URL with skill keyword + city location code (`loc_cd` from `lib/cities.js`).<br>2. `POST https://api.brightdata.com/request` with zone `web_unlocker1`, target URL, format `raw`.<br>3. Parse HTML in `parseJobListings()` for `.job_tit` / `.corp_name` CSS classes.<br>4. Return up to 5 jobs to the frontend `JobListings` component. |
-| **Required?** | **No.** If missing or scrape fails, the API falls back to **mock listings** (same UI, placeholder company names). IRS scoring does **not** depend on this key. |
-| **Caching** | Successful scrapes are stored in Firestore (`jobs` collection) when Firebase is configured, to reduce Bright Data usage. |
-| **Cost note** | Bright Data is a paid proxy service; use for demos/production job data, not required for core IRS/map/chat features. |
+| **Caching** | Successful scrapes are stored in Firestore (`jobs` collection) to reduce Bright Data usage. |
 
 **Example Saramin URL scraped:**
 `https://www.saramin.co.kr/zf_user/search/recruit?searchword=software+engineering&loc_cd=101000`
@@ -92,12 +88,11 @@ Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright
 |---|---|
 | **Provider** | [Firebase / Firestore](https://firebase.google.com/) |
 | **Used in** | `lib/firestore.js` |
-| **Purpose** | Optional persistence layer for three things: |
+| **Purpose** | Persistence layer used for: |
 | | 1. **Job cache** — scraped Saramin results per city+skill (48h TTL) |
 | | 2. **Session store** — user profile + city scores after `/api/profile` |
 | | 3. **City metrics cache** — IRS breakdown per city for analytics |
-| **Required?** | **No.** In-memory sessions work locally; without Firebase, jobs skip cache and sessions are not persisted across serverless cold starts (chat still works because the frontend sends full profile in each request). |
-| **Local vs Vercel** | Vercel: paste minified JSON into `FIREBASE_SERVICE_ACCOUNT_JSON`. |
+| **Deployment** | On Vercel: paste minified JSON into `FIREBASE_SERVICE_ACCOUNT_JSON`. |
 
 ---
 
@@ -107,8 +102,7 @@ Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright
 |---|---|
 | **Provider** | [MapTiler](https://www.maptiler.com/) |
 | **Used in** | `frontend/src/components/KoreaMap.jsx` |
-| **Purpose** | Upgrades the map from free **Esri satellite** tiles to **MapTiler hybrid** satellite + optional **3D terrain** (hills). |
-| **Required?** | **No.** Without it, the map still works using Esri imagery and 3D tilt. |
+| **Purpose** | Map tiles — **MapTiler hybrid** satellite with **3D terrain** (hills). Esri satellite is used as a fallback when this key is not set. |
 
 ---
 
@@ -122,20 +116,20 @@ Daily cron      →  POST /api/cron/refresh (re-scrapes sample skills via Bright
 
 ---
 
-### Quick reference table
+### Quick reference
 
-| Variable | Layer | Required | If missing |
-|----------|-------|----------|------------|
-| `ANTHROPIC_API_KEY` | API | For chat | Chat shows fallback / error |
-| `BRIGHTDATA_API_TOKEN` | API | No | Mock job listings shown |
-| `FIREBASE_SERVICE_ACCOUNT_*` | API | No | No cache; sessions ephemeral on Vercel |
-| `VITE_MAPTILER_KEY` | Frontend | No | Esri satellite map (still works) |
+| Variable | Layer | Role in project |
+|----------|-------|-----------------|
+| `ANTHROPIC_API_KEY` | API | Claude chat assistant |
+| `BRIGHTDATA_API_TOKEN` | API | Saramin job scraping via Web Unlocker |
+| `FIREBASE_SERVICE_ACCOUNT_*` | API | Firestore cache (jobs, sessions, metrics) |
+| `VITE_MAPTILER_KEY` | Frontend | MapTiler satellite / terrain tiles |
 
 ---
 
-### API (`.env` at repo root) — copy template
+### API (`.env` at repo root)
 
-See `.env.example` for the full list. Minimum for a full demo: **`ANTHROPIC_API_KEY`**. Add **Bright Data** when you want real Saramin jobs for mentors to verify live scraping.
+See `.env.example` for variable names. Keys above are the external services used in this build.
 
 ---
 
@@ -149,7 +143,7 @@ Use **two Vercel projects** from this repo:
 | Frontend | `frontend` | Static Vite build |
 
 1. Import [github.com/francisnatusm/ArrivAI](https://github.com/francisnatusm/ArrivAI) on Vercel
-2. Deploy API first — set `ANTHROPIC_API_KEY` in Vercel env vars
+2. Deploy API first — add env vars from `.env.example` in the Vercel dashboard
 3. Update `frontend/vercel.json` with your API URL if needed
 4. Deploy frontend with root `frontend`
 
