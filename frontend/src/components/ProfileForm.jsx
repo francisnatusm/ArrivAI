@@ -42,7 +42,7 @@ export default function ProfileForm({ onSubmit, loading }) {
     'w-full rounded-lg border border-white/10 bg-navy-light px-4 py-3 text-sm text-white outline-none transition focus:border-accent focus:ring-1 focus:ring-accent';
 
   return (
-    <section className="mx-auto flex min-h-[calc(100vh-80px)] max-w-lg flex-col justify-center px-6 py-12">
+    <section className="mx-auto flex max-w-lg flex-col justify-center px-6 py-12">
       <div className="mb-8 text-center">
         <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-accent">
           South Korea · Migrant Integration

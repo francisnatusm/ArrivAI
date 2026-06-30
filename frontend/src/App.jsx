@@ -7,6 +7,7 @@ import IRSScoreCard from './components/IRSScoreCard.jsx';
 import CityPanel from './components/CityPanel.jsx';
 import ChatAssistant from './components/ChatAssistant.jsx';
 import ProfileSummary from './components/ProfileSummary.jsx';
+import ContactFooter from './components/ContactFooter.jsx';
 
 export default function App() {
   const [dashboard, setDashboard] = useState(null);
@@ -40,12 +41,15 @@ export default function App() {
 
   if (!dashboard) {
     return (
-      <div className="min-h-screen bg-transparent">
+      <div className="flex min-h-screen flex-col bg-transparent">
         <Header />
         {error && (
           <p className="mx-auto max-w-lg px-6 text-center text-sm text-danger">{error}</p>
         )}
-        <ProfileForm onSubmit={handleProfileSubmit} loading={loading} />
+        <div className="flex flex-1 flex-col justify-center">
+          <ProfileForm onSubmit={handleProfileSubmit} loading={loading} />
+        </div>
+        <ContactFooter />
       </div>
     );
   }

@@ -172,5 +172,9 @@ Use **two Vercel projects** from this repo:
 Scores combine job demand, cost of living, Korean language fit, diaspora community fit, and market trend — weighted per city and personalized by skill + origin.
 
 <div align="center">
-  <a href="https://www.francisnatusm.com/">Francis Natus M.</a>
+
+**Contact** — Connect with the project creator
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/francis-natus-mugisha-66415529a)
+
 </div>
